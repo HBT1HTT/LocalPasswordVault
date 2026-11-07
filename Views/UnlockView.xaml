@@ -1,0 +1,55 @@
+<UserControl x:Class="LocalPasswordVault.Views.UnlockView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FontFamily="Microsoft YaHei UI">
+    <Grid Background="{StaticResource PageBrush}">
+        <Border Width="470"
+                Padding="36,32"
+                CornerRadius="12"
+                Background="{StaticResource SurfaceBrush}"
+                BorderBrush="{StaticResource LineBrush}"
+                BorderThickness="1"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            <StackPanel>
+                <TextBlock Text="本地密码库"
+                           FontSize="26"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource TextPrimaryBrush}" />
+                <TextBlock Text="使用 Windows Hello 验证身份后访问本地加密密码库"
+                           Margin="0,8,0,0"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           TextWrapping="Wrap" />
+
+                <Border Background="#F8FAFC"
+                        CornerRadius="8"
+                        Padding="14,12"
+                        Margin="0,24,0,0">
+                    <TextBlock x:Name="StatusText"
+                               Text="正在检查 Windows Hello 是否可用…"
+                               TextWrapping="Wrap"
+                               Foreground="#334155" />
+                </Border>
+
+                <TextBlock x:Name="ErrorText"
+                           Margin="0,12,0,0"
+                           Foreground="{StaticResource DangerBrush}"
+                           TextWrapping="Wrap"
+                           Visibility="Collapsed" />
+
+                <Button x:Name="VerifyButton"
+                        Content="验证身份"
+                        Height="40"
+                        Margin="0,20,0,0"
+                        Style="{StaticResource PrimaryButton}"
+                        Click="VerifyButton_Click" />
+
+                <TextBlock Text="本工具不会读取或保存您的 Windows 密码 / PIN，验证完全由 Windows 完成。"
+                           Margin="0,18,0,0"
+                           FontSize="12"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

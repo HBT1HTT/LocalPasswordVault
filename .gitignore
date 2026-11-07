@@ -1,0 +1,13 @@
+# 构建产物
+bin/
+obj/
+publish/
+
+# IDE
+.vs/
+*.user
+*.suo
+
+# 生成物
+Assets/icon-preview-*.png
+*.pdb
