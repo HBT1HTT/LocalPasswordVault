@@ -11,6 +11,30 @@
         Background="{StaticResource PageBrush}"
         FontFamily="Microsoft YaHei UI"
         FontSize="14"
-        TextOptions.TextFormattingMode="Display">
-    <ContentControl x:Name="RootContent" />
+        TextOptions.TextFormattingMode="Display"
+        PreviewMouseMove="UserActivity_MouseMove"
+        PreviewMouseDown="UserActivity_MouseDown"
+        PreviewMouseWheel="UserActivity_MouseWheel"
+        PreviewKeyDown="UserActivity_KeyDown">
+    <Grid>
+        <ContentControl x:Name="RootContent" />
+
+        <!-- 验证遮挡层：完全不透明，覆盖窗口客户区，验证期间其后的条目内容不可见 -->
+        <Border x:Name="VerificationShield"
+                Background="{StaticResource ShieldBrush}"
+                Visibility="Collapsed">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="密码正在保护中"
+                           FontSize="26"
+                           FontWeight="SemiBold"
+                           Foreground="White"
+                           HorizontalAlignment="Center" />
+                <TextBlock Text="正在验证身份，请完成 Windows Hello 验证…"
+                           FontSize="14"
+                           Foreground="#CBD5E1"
+                           Margin="0,12,0,0"
+                           HorizontalAlignment="Center" />
+            </StackPanel>
+        </Border>
+    </Grid>
 </Window>

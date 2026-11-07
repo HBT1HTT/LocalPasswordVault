@@ -54,7 +54,12 @@ namespace LocalPasswordVault.Views
                 }
 
                 StatusText.Text = "请在 Windows 验证窗口中完成身份验证…";
-                var verified = await HelloAuthService.VerifyAsync("验证身份以打开本地密码库");
+
+                // 验证前先在应用窗口内盖上不透明遮挡，避免验证窗口后方露出内容
+                var mainWindow = Window.GetWindow(this) as MainWindow;
+                var verified = mainWindow is not null
+                    ? await mainWindow.VerifyWithShieldAsync("验证身份以打开本地密码库")
+                    : await HelloAuthService.VerifyAsync("验证身份以打开本地密码库");
                 if (verified)
                 {
                     Log.Info("Windows Hello 验证通过");

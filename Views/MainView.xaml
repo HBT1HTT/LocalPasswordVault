@@ -20,10 +20,30 @@
                            FontWeight="SemiBold"
                            Foreground="{StaticResource TextPrimaryBrush}"
                            VerticalAlignment="Center" />
-                <Button Content="新建"
-                        HorizontalAlignment="Right"
-                        Style="{StaticResource PrimaryButton}"
-                        Click="NewButton_Click" />
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center">
+                    <TextBlock x:Name="SelectionHint"
+                               Text="请先选择一个条目"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,12,0"
+                               Visibility="Collapsed" />
+                    <Button x:Name="DeleteButton"
+                            Content="删除"
+                            Style="{StaticResource SecondaryButton}"
+                            Foreground="{StaticResource DangerBrush}"
+                            IsEnabled="False"
+                            Margin="0,0,8,0"
+                            Click="DeleteButton_Click" />
+                    <Button Content="新建"
+                            Style="{StaticResource PrimaryButton}"
+                            Click="NewButton_Click" />
+                    <Button Content="设置"
+                            Style="{StaticResource LinkButton}"
+                            Margin="14,0,0,0"
+                            Click="SettingsButton_Click" />
+                </StackPanel>
             </Grid>
         </Border>
 

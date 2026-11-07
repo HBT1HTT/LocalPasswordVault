@@ -49,6 +49,11 @@ namespace LocalPasswordVault.Services
                         CreatedAt TEXT NOT NULL,
                         UpdatedAt TEXT NOT NULL
                     );
+
+                    CREATE TABLE IF NOT EXISTS Settings (
+                        Key TEXT PRIMARY KEY,
+                        Value TEXT NOT NULL
+                    );
                     """;
                 command.ExecuteNonQuery();
             }
@@ -199,6 +204,136 @@ namespace LocalPasswordVault.Services
                 throw new StorageException("保存失败：无法写入本地数据库，请重试。", ex);
             }
         }
+
+        /// <summary>删除条目。返回时该行已从数据库移除。</summary>
+        public void Delete(long id)
+        {
+            try
+            {
+                using var connection = OpenConnection();
+                using var command = connection.CreateCommand();
+                command.CommandText = "DELETE FROM Entries WHERE Id = @id;";
+                command.Parameters.AddWithValue("@id", id);
+
+                if (command.ExecuteNonQuery() == 0)
+                {
+                    throw new StorageException("该条目不存在，可能已被删除。");
+                }
+            }
+            catch (Exception ex) when (IsStorageFailure(ex))
+            {
+                Log.Error("删除条目失败", ex);
+                throw new StorageException("删除失败：无法写入本地数据库，请重试。", ex);
+            }
+        }
+
+        /// <summary>
+        /// 删除条目时是否需要 Windows Hello 验证。默认 true（需要验证）。
+        /// 设置读取失败时同样返回 true，避免静默降级为免验证。
+        /// </summary>
+        public bool GetDeleteRequiresVerification()
+        {
+            try
+            {
+                using var connection = OpenConnection();
+                using var command = connection.CreateCommand();
+                command.CommandText = "SELECT Value FROM Settings WHERE Key = @key;";
+                command.Parameters.AddWithValue("@key", DeleteVerificationKey);
+
+                var value = command.ExecuteScalar() as string;
+                return value is null || value != "0";
+            }
+            catch (Exception ex) when (IsStorageFailure(ex))
+            {
+                Log.Error("读取删除验证设置失败", ex);
+                return true;
+            }
+        }
+
+        public void SetDeleteRequiresVerification(bool requiresVerification)
+        {
+            try
+            {
+                using var connection = OpenConnection();
+                using var command = connection.CreateCommand();
+                command.CommandText = """
+                    INSERT INTO Settings (Key, Value) VALUES (@key, @value)
+                    ON CONFLICT(Key) DO UPDATE SET Value = excluded.Value;
+                    """;
+                command.Parameters.AddWithValue("@key", DeleteVerificationKey);
+                command.Parameters.AddWithValue("@value", requiresVerification ? "1" : "0");
+                command.ExecuteNonQuery();
+            }
+            catch (Exception ex) when (IsStorageFailure(ex))
+            {
+                Log.Error("保存删除验证设置失败", ex);
+                throw new StorageException("保存设置失败：无法写入本地数据库，请重试。", ex);
+            }
+        }
+
+        /// <summary>
+        /// 闲置自动锁定时长（分钟）。默认 5 分钟；0 表示关闭自动锁定。
+        /// 只接受 0/1/5/10/30，读到非法值或读取失败时回落到默认值。
+        /// </summary>
+        public int GetAutoLockMinutes()
+        {
+            try
+            {
+                using var connection = OpenConnection();
+                using var command = connection.CreateCommand();
+                command.CommandText = "SELECT Value FROM Settings WHERE Key = @key;";
+                command.Parameters.AddWithValue("@key", AutoLockMinutesKey);
+
+                var value = command.ExecuteScalar() as string;
+                if (value is null)
+                {
+                    return DefaultAutoLockMinutes;
+                }
+
+                var minutes = int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed)
+                    ? parsed
+                    : -1;
+                return IsValidAutoLockMinutes(minutes) ? minutes : DefaultAutoLockMinutes;
+            }
+            catch (Exception ex) when (IsStorageFailure(ex))
+            {
+                Log.Error("读取自动锁定设置失败", ex);
+                return DefaultAutoLockMinutes;
+            }
+        }
+
+        public void SetAutoLockMinutes(int minutes)
+        {
+            if (!IsValidAutoLockMinutes(minutes))
+            {
+                throw new ArgumentOutOfRangeException(nameof(minutes));
+            }
+
+            try
+            {
+                using var connection = OpenConnection();
+                using var command = connection.CreateCommand();
+                command.CommandText = """
+                    INSERT INTO Settings (Key, Value) VALUES (@key, @value)
+                    ON CONFLICT(Key) DO UPDATE SET Value = excluded.Value;
+                    """;
+                command.Parameters.AddWithValue("@key", AutoLockMinutesKey);
+                command.Parameters.AddWithValue("@value", minutes.ToString(CultureInfo.InvariantCulture));
+                command.ExecuteNonQuery();
+            }
+            catch (Exception ex) when (IsStorageFailure(ex))
+            {
+                Log.Error("保存自动锁定设置失败", ex);
+                throw new StorageException("保存设置失败：无法写入本地数据库，请重试。", ex);
+            }
+        }
+
+        public const int DefaultAutoLockMinutes = 5;
+
+        private const string DeleteVerificationKey = "DeleteRequiresVerification";
+        private const string AutoLockMinutesKey = "AutoLockMinutes";
+
+        private static bool IsValidAutoLockMinutes(int minutes) => minutes is 0 or 1 or 5 or 10 or 30;
 
         private SqliteConnection OpenConnection()
         {

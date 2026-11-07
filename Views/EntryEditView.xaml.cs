@@ -81,6 +81,9 @@ namespace LocalPasswordVault.Views
             Cancelled?.Invoke(this, EventArgs.Empty);
         }
 
+        /// <summary>闲置自动锁定时调用：清空输入框中的明文内容。</summary>
+        public void ClearSensitiveState() => ClearInputs();
+
         private void ClearInputs()
         {
             NameBox.Text = string.Empty;
