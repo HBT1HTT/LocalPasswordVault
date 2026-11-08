@@ -8,14 +8,29 @@ namespace LocalPasswordVault.Views
     {
         private bool _verifying;
         private bool _autoStarted;
+        private readonly bool _autoVerify;
 
         public event EventHandler? Unlocked;
 
-        public UnlockView()
+        /// <param name="autoVerify">
+        /// true：启动时立即发起 Windows Hello 验证（保持原有启动流程）。
+        /// false：闲置自动锁定后使用，只显示解锁页与提示，等用户点击“验证身份”再验证。
+        /// </param>
+        public UnlockView(bool autoVerify = true)
         {
+            _autoVerify = autoVerify;
             InitializeComponent();
+
+            if (!autoVerify)
+            {
+                // 闲置锁定：不主动弹系统验证窗口，先把提示放在页面上
+                StatusText.Text = IdleLockedHint;
+            }
+
             Loaded += UnlockView_Loaded;
         }
+
+        private const string IdleLockedHint = "已因闲置锁定，请点击“验证身份”继续。";
 
         private async void UnlockView_Loaded(object sender, RoutedEventArgs e)
         {
@@ -25,6 +40,15 @@ namespace LocalPasswordVault.Views
             }
 
             _autoStarted = true;
+
+            if (!_autoVerify)
+            {
+                Log.Info("解锁页：等待用户点击验证身份（不自动调用 Windows Hello）");
+                VerifyButton.Focus();
+                return;
+            }
+
+            Log.Info("解锁页：启动时自动发起 Windows Hello 验证");
             await VerifyAsync();
         }
 

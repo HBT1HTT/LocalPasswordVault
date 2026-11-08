@@ -43,9 +43,9 @@ namespace LocalPasswordVault
             ShowUnlock();
         }
 
-        private void ShowUnlock()
+        private void ShowUnlock(bool autoVerify = true)
         {
-            var view = new UnlockView();
+            var view = new UnlockView(autoVerify);
             view.Unlocked += (_, _) => ShowMain(null);
             RootContent.Content = view;
         }
@@ -170,7 +170,7 @@ namespace LocalPasswordVault
             }
 
             Log.Info("闲置超时，自动锁定");
-            LockNow();
+            LockNow(autoVerify: false);
         }
 
         /// <summary>导入替换数据库后调用：清空内存中的旧数据并回到锁定页。</summary>
@@ -182,10 +182,10 @@ namespace LocalPasswordVault
             }
 
             Log.Info("导入完成，回到锁定状态");
-            LockNow();
+            LockNow(autoVerify: true);
         }
 
-        private void LockNow()
+        private void LockNow(bool autoVerify)
         {
             _unlocked = false;
             _idlePaused = false;
@@ -194,7 +194,12 @@ namespace LocalPasswordVault
             // 先清空所有已解密内容与列表，再把界面换成锁定页
             ClearSensitiveContent();
             RootContent.Content = null;
-            ShowUnlock();
+            ShowUnlock(autoVerify);
+
+            if (!autoVerify)
+            {
+                Log.Info("闲置锁定：已清空敏感内容，解锁页等待用户点击验证身份（不自动调用 Windows Hello）");
+            }
         }
 
         private void ClearSensitiveContent()
